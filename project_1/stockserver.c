@@ -167,24 +167,25 @@ int main(int argc, char **argv)
 		}
 
 		char tmp_text_buf[MAXLINE];
+		for(int j=0 ; j< MAXLINE ; j++) tmp_text_buf[j] = 0;
 		/* text file update */
-		/*
+		
 		if ((text_fd=open("stock.txt", O_WRONLY)) < 0){
 			perror("open");
 			exit(1);
 		}
 		print_item(root, tmp_text_buf);
-		if(write(text_fd, tmp_text_buf, sizeof(buf)) < 0){
+		if(write(text_fd, tmp_text_buf, strlen(tmp_text_buf)) < 0){
 			perror("write");
 			exit(1);
 		}
 		Close(text_fd);
-		*/
-		for(int j=0 ; j< MAXLINE ; j++) tmp_text_buf[j] = 0;
+		/*
 		print_item(root, tmp_text_buf);
 		FILE *fp = fopen("stock.txt", "w");
 		fprintf(fp, "%s", tmp_text_buf);
 		fclose(fp);
+		*/
 	}
 
 
