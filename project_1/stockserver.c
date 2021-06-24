@@ -32,9 +32,9 @@ int main(int argc, char **argv)
 	socklen_t clientlen;
 	struct sockaddr_storage clientaddr;  /* Enough space for any address */  //line:netp:echoserveri:sockaddrstorage
 	char client_hostname[MAXLINE], client_port[MAXLINE];
-	//fd_set reads, temps;
-	//struct timeval timeout;
-	//int fd_max;
+	fd_set reads, temps;
+	struct timeval timeout;
+	int fd_max;
 
 	itemptr root = NULL;
 	int text_fd;
@@ -48,9 +48,9 @@ int main(int argc, char **argv)
 
 	listenfd = Open_listenfd(argv[1]); // bind까지 끝남.
 
-	//FD_ZERO(&reads); // fd_set 초기화
-	//FD_SET(listenfd, &reads); // listen 소켓 관리대상으로 지정
-	//fd_max = listenfd;
+	FD_ZERO(&reads); // fd_set 초기화
+	FD_SET(listenfd, &reads); // listen 소켓 관리대상으로 지정
+	fd_max = listenfd;
 	
 	/* 이진 트리 구성 */
 	if ((text_fd=open("stock.txt", O_RDONLY)) < 0){
@@ -87,32 +87,32 @@ int main(int argc, char **argv)
 	Close(text_fd);
 
 	// epoll 관련 변수들 선언
-	struct epoll_event* ep_events_buf;
-	struct epoll_event userevent;
-	int epfd, event_cnt;
+	//struct epoll_event* ep_events_buf;
+	//struct epoll_event userevent;
+	//int epfd, event_cnt;
 	int i;
 
-	epfd = epoll_create(1000);
-	ep_events_buf = malloc(sizeof(struct epoll_event) * 1000);
+	//epfd = epoll_create(1000);
+	//ep_events_buf = malloc(sizeof(struct epoll_event) * 1000);
 
-	userevent.events = EPOLLIN;
-	userevent.data.fd = listenfd;
-	epoll_ctl(epfd, EPOLL_CTL_ADD, listenfd, &userevent);
+	//userevent.events = EPOLLIN;
+	//userevent.data.fd = listenfd;
+	//epoll_ctl(epfd, EPOLL_CTL_ADD, listenfd, &userevent);
 
 
-	//int sel_result;
+	int sel_result;
 	while (1) {
-		/*
 		temps = reads;
-		timeout.tv_sec = 5;
-		timeout.tv_usec = 5000;
+		timeout.tv_sec = 3;
+		timeout.tv_usec = 3000;
 
 		sel_result = select(fd_max+1, &temps, 0, 0, &timeout);
+
 		if(sel_result == -1) break;
 		else if(sel_result == 0) continue;
 		else{
-			for(int i=0 ; i<fd_max+1 ; i++){
-				if(FD_ISSET(i, &temps)){
+			for(i=0 ; i<fd_max+1 ; i++){
+				if(FD_ISSET(i, &temps)){ 
 					if(i == listenfd){
 						clientlen = sizeof(struct sockaddr_storage); 
 						connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
@@ -132,7 +132,8 @@ int main(int argc, char **argv)
 			}
 		}
 		//Close(connfd);
-		*/
+		
+		/*
 		// 무한 대기하며 epfd중에 변화가 있는 fd 확인. 확인 후 event 버퍼에 넣음.
 		event_cnt = epoll_wait(epfd, ep_events_buf, 1000, -1);
 
@@ -165,9 +166,12 @@ int main(int argc, char **argv)
 				root=stock_echo(ep_events_buf[i].data.fd, root);
 			}
 		}
+		*/
 
 		char tmp_text_buf[MAXLINE];
 		for(int j=0 ; j< MAXLINE ; j++) tmp_text_buf[j] = 0;
+		tmp_text_buf[0] = ' ';
+
 		/* text file update */
 		
 		if ((text_fd=open("stock.txt", O_WRONLY)) < 0){
@@ -175,7 +179,7 @@ int main(int argc, char **argv)
 			exit(1);
 		}
 		print_item(root, tmp_text_buf);
-		if(write(text_fd, tmp_text_buf, strlen(tmp_text_buf)) < 0){
+		if(write(text_fd, tmp_text_buf+1, strlen(tmp_text_buf) - 1) < 0){
 			perror("write");
 			exit(1);
 		}
@@ -191,7 +195,7 @@ int main(int argc, char **argv)
 
 
 	Close(listenfd);
-	close(epfd);
+	//close(epfd);
 	free_item(root);
 	exit(0);
 	return 0;
@@ -258,12 +262,10 @@ void free_item(itemptr root){
 void print_item(itemptr root, char *buf){
 	if(root == NULL) return;
 
-	char tmp_buf[MAXLINE/2]= {0,};
+	char tmp_buf[MAXLINE]= {-1 ,};
 
-	P(&(root->mutex));
 	sprintf(tmp_buf,"%d %d %d\n", root->ID, root->left_stock, root->price);
 	strcat(buf, tmp_buf);
-	V(&(root->mutex));
 	print_item(root->leftChild, buf);
 	print_item(root->rightChild, buf);	
 }

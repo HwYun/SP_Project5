@@ -164,10 +164,8 @@ void print_item(itemptr root, char *buf){
 
 	char tmp_buf[MAXLINE/2]= {0,};
 
-	P(&(root->mutex));
 	sprintf(tmp_buf,"%d %d %d\n", root->ID, root->left_stock, root->price);
 	strcat(buf, tmp_buf);
-	V(&(root->mutex));
 	print_item(root->leftChild, buf);
 	print_item(root->rightChild, buf);	
 }
